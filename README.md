@@ -4,10 +4,10 @@
 ESP32 controlled mini skid steer vehicle with articulated arm and bucket.
 
 ## Hardware
-- ESP32
+- ESP32 C3
 - DRV8833 motor driver
-- Two DC drive motors
-- Two servo motors
+- Two DC drive motors N20 300rpm
+- Two servo motors MG90 and SG 90
 - Rechargeable battery system
 
 ## Software
