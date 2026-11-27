@@ -12,4 +12,6 @@ public:
   bool hasWiFiCredentials() const;
   String getProvisionedSSID() const;
   String getProvisionedPassword() const;
+
+  void sendTestNotification();
 };
