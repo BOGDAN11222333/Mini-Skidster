@@ -3,6 +3,7 @@
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
+#include <string>
 
 #include "../Config/Config.h"
 
@@ -78,6 +79,7 @@ bool BLEManager::begin() {
   Serial.println("[BLE] Initializing BLE...");
 
   BLEDevice::init(MINISKIDSTER_BLE_DEVICE_NAME);
+  BLEDevice::setMTU(100);
 
   BLEServer* server = BLEDevice::createServer();
   if (server == nullptr) {
