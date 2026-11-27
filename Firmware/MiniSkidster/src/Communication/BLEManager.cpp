@@ -9,6 +9,10 @@
 namespace {
 
 bool g_bleConnected = false;
+String g_wifiSSID;
+String g_wifiPassword;
+bool g_ssidReceived = false;
+bool g_passwordReceived = false;
 
 class MiniSkidsterServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* server) override {
@@ -22,6 +26,49 @@ class MiniSkidsterServerCallbacks : public BLEServerCallbacks {
     Serial.println("[BLE] Restarting advertising...");
     BLEDevice::startAdvertising();
   }
+};
+
+class WiFiCredentialCallbacks : public BLECharacteristicCallbacks {
+public:
+  explicit WiFiCredentialCallbacks(bool isSSID) : isSSID_(isSSID) {}
+
+  void onWrite(BLECharacteristic* characteristic) override {
+    const std::string value = characteristic->getValue();
+
+    if (isSSID_) {
+      if (value.empty() || value.length() > 32) {
+        g_ssidReceived = false;
+        Serial.println("[BLE] Rejected SSID: length must be 1-32 bytes.");
+        return;
+      }
+
+      g_wifiSSID = String(value.c_str());
+      g_ssidReceived = true;
+      Serial.print("[BLE] Wi-Fi SSID received (");
+      Serial.print(value.length());
+      Serial.println(" bytes).");
+    } else {
+      if (value.length() > 63) {
+        g_passwordReceived = false;
+        Serial.println("[BLE] Rejected Wi-Fi password: maximum 63 bytes.");
+        return;
+      }
+
+      g_wifiPassword = String(value.c_str());
+      g_passwordReceived = true;
+      Serial.print("[BLE] Wi-Fi password received (");
+      Serial.print(value.length());
+      Serial.println(" bytes).");
+    }
+
+    if (g_ssidReceived && g_passwordReceived) {
+      Serial.println("[BLE] Wi-Fi credentials received and stored in RAM.");
+      Serial.println("[BLE] Wi-Fi connection will be handled in Stage 1.4.");
+    }
+  }
+
+private:
+  bool isSSID_;
 };
 
 }  // namespace
@@ -48,8 +95,6 @@ bool BLEManager::begin() {
     return false;
   }
 
-  // A read-only identification characteristic confirms that the GATT
-  // service is available. Provisioning characteristics come in Stage 1.3.
   BLECharacteristic* infoCharacteristic = service->createCharacteristic(
       MINISKIDSTER_BLE_INFO_CHARACTERISTIC_UUID,
       BLECharacteristic::PROPERTY_READ);
@@ -62,6 +107,22 @@ bool BLEManager::begin() {
   const String deviceInfo =
       String("MiniSkidster | Firmware ") + MINISKIDSTER_FIRMWARE_VERSION;
   infoCharacteristic->setValue(deviceInfo.c_str());
+
+  BLECharacteristic* ssidCharacteristic = service->createCharacteristic(
+      MINISKIDSTER_BLE_WIFI_SSID_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_WRITE);
+
+  BLECharacteristic* passwordCharacteristic = service->createCharacteristic(
+      MINISKIDSTER_BLE_WIFI_PASSWORD_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_WRITE);
+
+  if (ssidCharacteristic == nullptr || passwordCharacteristic == nullptr) {
+    Serial.println("[BLE] ERROR: Could not create Wi-Fi provisioning characteristics.");
+    return false;
+  }
+
+  ssidCharacteristic->setCallbacks(new WiFiCredentialCallbacks(true));
+  passwordCharacteristic->setCallbacks(new WiFiCredentialCallbacks(false));
 
   service->start();
 
@@ -77,6 +138,7 @@ bool BLEManager::begin() {
   Serial.print("[BLE] Service UUID: ");
   Serial.println(MINISKIDSTER_BLE_SERVICE_UUID);
   Serial.println("[BLE] Advertising: active");
+  Serial.println("[BLE] Wi-Fi credential characteristics: ready");
   Serial.println("[BLE] Waiting for phone connection...");
 
   return true;
@@ -84,4 +146,16 @@ bool BLEManager::begin() {
 
 bool BLEManager::isConnected() const {
   return g_bleConnected;
+}
+
+bool BLEManager::hasWiFiCredentials() const {
+  return g_ssidReceived && g_passwordReceived;
+}
+
+String BLEManager::getProvisionedSSID() const {
+  return g_wifiSSID;
+}
+
+String BLEManager::getProvisionedPassword() const {
+  return g_wifiPassword;
 }
