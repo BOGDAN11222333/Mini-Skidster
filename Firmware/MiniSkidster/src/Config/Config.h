@@ -5,10 +5,10 @@
 // -----------------------------------------------------------------------------
 // MiniSkidster firmware configuration
 // Board: ESP32-C3 Super Mini
-// Development stage: 1.2 - BLE initialization and discovery
+// Development stage: 1.3 - BLE Wi-Fi credential provisioning
 // -----------------------------------------------------------------------------
 
-#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.2"
+#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.3"
 #define MINISKIDSTER_BOARD_NAME "ESP32-C3 Super Mini"
 #define MINISKIDSTER_SERIAL_BAUD 115200
 
@@ -16,6 +16,8 @@
 #define MINISKIDSTER_BLE_DEVICE_NAME "MiniSkidster"
 #define MINISKIDSTER_BLE_SERVICE_UUID "7b2e0001-6d3a-4f8c-9b21-5a7d3c8e1000"
 #define MINISKIDSTER_BLE_INFO_CHARACTERISTIC_UUID "7b2e0002-6d3a-4f8c-9b21-5a7d3c8e1000"
+#define MINISKIDSTER_BLE_WIFI_SSID_CHARACTERISTIC_UUID "7b2e0003-6d3a-4f8c-9b21-5a7d3c8e1000"
+#define MINISKIDSTER_BLE_WIFI_PASSWORD_CHARACTERISTIC_UUID "7b2e0004-6d3a-4f8c-9b21-5a7d3c8e1000"
 
 namespace MiniSkidsterConfig {
 
