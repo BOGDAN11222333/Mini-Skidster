@@ -18,7 +18,7 @@ void setup() {
 }
 
 void loop() {
-  // Stage 1.3: BLE advertising and Wi-Fi credential reception only.
+  // Stage 1.3: MiniSkidster BLE GATT interface and command RX test only.
   // Wi-Fi, protocol and vehicle-control tasks will be added in later stages.
   delay(1000);
 }
@@ -37,8 +37,8 @@ void printStartupInformation() {
   Serial.print(F("CPU frequency: "));
   Serial.print(ESP.getCpuFreqMHz());
   Serial.println(F(" MHz"));
-  Serial.println(F("Stage: 1.3 - BLE Wi-Fi credential provisioning"));
-  Serial.println(F("Wi-Fi: not implemented"));
+  Serial.println(F("Stage: 1.3 - BLE GATT interface alignment"));
+  Serial.println(F("Wi-Fi connection: not implemented"));
   Serial.println(F("Motor/servo outputs: not initialized"));
   Serial.println(F("System startup complete."));
   Serial.println(F("========================================"));
