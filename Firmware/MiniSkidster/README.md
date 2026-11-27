@@ -11,15 +11,15 @@ Firmware for the MiniSkidster RC skid-steer vehicle, based on the ESP32-C3 Super
 
 ## Current development stage
 
-**Stage 1.1 – Firmware foundation**
+**Stage 1.2 – BLE initialization and device discovery (development build 1.0.0-dev.2)**
 
-The current development build starts the serial interface and reports firmware and chip information. It does not initialize GPIO outputs, motors, servos, BLE or Wi-Fi.
+The current development build starts the serial interface, reports firmware and chip information, and initializes BLE advertising under the device name `MiniSkidster`. It exposes a read-only identification characteristic. Wi-Fi provisioning, the operational control server, motors and servos are not implemented yet.
 
 ## Project architecture
 
 The firmware will follow the modular architecture established for the Oliver RC Car, adapted to the ESP32-C3:
 
-- Communication/ – BLE provisioning and Wi-Fi communication
+- Communication/ – BLE initialization/provisioning and Wi-Fi communication
 - Protocol/ – message framing and command parsing
 - Control/ – central vehicle command routing
 - Modules/ – drive, arm and bucket hardware modules
