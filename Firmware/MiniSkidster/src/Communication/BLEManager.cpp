@@ -37,7 +37,7 @@ public:
     const String value = characteristic->getValue();
 
     if (isSSID_) {
-      if (value.empty() || value.length() > 32) {
+      if (value.isEmpty() || value.length() > 32) {
         g_ssidReceived = false;
         Serial.println("[BLE] Rejected SSID: length must be 1-32 bytes.");
         return;
