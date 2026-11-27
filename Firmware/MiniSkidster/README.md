@@ -11,9 +11,9 @@ Firmware for the MiniSkidster RC skid-steer vehicle, based on the ESP32-C3 Super
 
 ## Current development stage
 
-**Stage 1.2 – BLE initialization and device discovery (development build 1.0.0-dev.2)**
+**Stage 1.3 – BLE Wi-Fi credential provisioning (development build 1.0.0-dev.3)**
 
-The current development build starts the serial interface, reports firmware and chip information, and initializes BLE advertising under the device name `MiniSkidster`. It exposes a read-only identification characteristic. Wi-Fi provisioning, the operational control server, motors and servos are not implemented yet.
+The current development build initializes BLE advertising under the device name `MiniSkidster`. It exposes a read-only identification characteristic plus separate write characteristics for Wi-Fi SSID and password. Received credentials are validated and stored in RAM only; they are not printed to Serial and are not persisted. The ESP32 does not connect to Wi-Fi in this stage. Wi-Fi connection/status handling is Stage 1.4. Motors and servos are not implemented.
 
 ## Project architecture
 
