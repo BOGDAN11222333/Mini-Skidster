@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-// Handles BLE initialization, identification and Wi-Fi credential reception.
-// Wi-Fi connection and status reporting are implemented in Stage 1.4.
+// Handles MiniSkidster BLE initialization and GATT communication endpoints.
+// Command parsing and Wi-Fi connection are implemented in later stages.
 class BLEManager {
 public:
   bool begin();
