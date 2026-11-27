@@ -5,10 +5,10 @@
 // -----------------------------------------------------------------------------
 // MiniSkidster firmware configuration
 // Board: ESP32-C3 Super Mini
-// Development stage: 1.1 - Firmware foundation
+// Development stage: 1.2 - BLE initialization and discovery
 // -----------------------------------------------------------------------------
 
-#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.1"
+#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.2"
 #define MINISKIDSTER_BOARD_NAME "ESP32-C3 Super Mini"
 #define MINISKIDSTER_SERIAL_BAUD 115200
 
