@@ -34,7 +34,7 @@ public:
   explicit WiFiCredentialCallbacks(bool isSSID) : isSSID_(isSSID) {}
 
   void onWrite(BLECharacteristic* characteristic) override {
-    const std::string value = characteristic->getValue();
+    const String value = characteristic->getValue();
 
     if (isSSID_) {
       if (value.empty() || value.length() > 32) {
