@@ -12,6 +12,11 @@
 #define MINISKIDSTER_BOARD_NAME "ESP32-C3 Super Mini"
 #define MINISKIDSTER_SERIAL_BAUD 115200
 
+// BLE identification and GATT service configuration.
+#define MINISKIDSTER_BLE_DEVICE_NAME "MiniSkidster"
+#define MINISKIDSTER_BLE_SERVICE_UUID "7b2e0001-6d3a-4f8c-9b21-5a7d3c8e1000"
+#define MINISKIDSTER_BLE_INFO_CHARACTERISTIC_UUID "7b2e0002-6d3a-4f8c-9b21-5a7d3c8e1000"
+
 namespace MiniSkidsterConfig {
 
 // DRV8833 motor driver pin assignments.
