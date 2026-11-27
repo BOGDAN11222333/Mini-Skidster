@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include "Config/Config.h"
+#include "Communication/BLEManager.h"
+
+BLEManager bleManager;
 
 void printStartupInformation();
 
@@ -8,11 +11,15 @@ void setup() {
   delay(500);
 
   printStartupInformation();
+
+  if (!bleManager.begin()) {
+    Serial.println("[SYSTEM] BLE startup failed.");
+  }
 }
 
 void loop() {
-  // Stage 1.1 intentionally has no vehicle-control or communication tasks.
-  // BLE, Wi-Fi and hardware modules will be added in later stages.
+  // Stage 1.2: BLE advertising and connection monitoring only.
+  // Wi-Fi, protocol and vehicle-control tasks will be added in later stages.
   delay(1000);
 }
 
@@ -30,8 +37,7 @@ void printStartupInformation() {
   Serial.print(F("CPU frequency: "));
   Serial.print(ESP.getCpuFreqMHz());
   Serial.println(F(" MHz"));
-  Serial.println(F("Stage: 1.1 - Firmware foundation"));
-  Serial.println(F("BLE: not implemented"));
+  Serial.println(F("Stage: 1.2 - BLE initialization and discovery"));
   Serial.println(F("Wi-Fi: not implemented"));
   Serial.println(F("Motor/servo outputs: not initialized"));
   Serial.println(F("System startup complete."));
