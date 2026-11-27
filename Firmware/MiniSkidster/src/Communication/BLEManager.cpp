@@ -216,4 +216,18 @@ String BLEManager::getProvisionedSSID() const {
 
 String BLEManager::getProvisionedPassword() const {
   return g_wifiPassword;
+  void BLEManager::sendTestNotification() {
+  if (!g_bleConnected || g_txCharacteristic == nullptr) {
+    Serial.println("[BLE] Cannot send test notification: phone not connected.");
+    return;
+  }
+
+  const String message = "@BTEST|ESP32_RESPONSE@E";
+
+  g_txCharacteristic->setValue(message.c_str());
+  g_txCharacteristic->notify();
+
+  Serial.print("[BLE] Test notification sent: ");
+  Serial.println(message);
+}
 }
