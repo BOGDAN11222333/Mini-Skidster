@@ -90,7 +90,7 @@ void WiFiManager::update() {
     case State::CONNECTED:
       if (WiFi.status() != WL_CONNECTED) {
         Serial.println("[WIFI] Connection lost.");
-        bleManager_.sendResponse("WIFI_DISCONNECTED");
+        bleManager_.sendResponse("<WIFI_DISCONNECTED>");
         scheduleRetry("CONNECTION_LOST");
       }
       break;
@@ -116,8 +116,8 @@ void WiFiManager::updateScan() {
 
   if (result == WIFI_SCAN_FAILED) {
     Serial.println("[WIFI] Network scan failed.");
-    bleManager_.sendResponse("WIFI_LIST_START");
-    bleManager_.sendResponse("WIFI_LIST_END");
+    bleManager_.sendResponse("<WIFI_LIST_START>");
+    bleManager_.sendResponse("<WIFI_LIST_END>");
     WiFi.scanDelete();
     state_ = State::WAITING_FOR_REQUEST;
     return;
@@ -139,7 +139,7 @@ void WiFiManager::reportScanResults(int16_t networkCount) {
 
   // These message names and payloads match the existing MIT App Inventor
   // receive parser: clear list, append each WIFI value, then finish the list.
-  bleManager_.sendResponse("WIFI_LIST_START");
+  bleManager_.sendResponse("<WIFI_LIST_START>");
 
   for (uint8_t i = 0; i < reportedCount; ++i) {
     const String ssid = WiFi.SSID(i);
@@ -153,10 +153,10 @@ void WiFiManager::reportScanResults(int16_t networkCount) {
     Serial.print(WiFi.RSSI(i));
     Serial.println(" dBm)");
 
-    bleManager_.sendResponse("WIFI|" + ssid);
+    bleManager_.sendResponse("<WIFI:" + ssid + "," + String(WiFi.RSSI(i)) + ">");
   }
 
-  bleManager_.sendResponse("WIFI_LIST_END");
+  bleManager_.sendResponse("<WIFI_LIST_END>");
 }
 
 bool WiFiManager::isConnected() const {
@@ -178,7 +178,7 @@ void WiFiManager::startConnection(bool isRetry) {
     Serial.println(MAX_RETRIES);
   } else {
     Serial.println("[WIFI] Starting connection...");
-    bleManager_.sendResponse("WIFI_CONNECTING");
+    bleManager_.sendResponse("<WIFI_CONNECTING>");
   }
 
   Serial.print("[WIFI] Connecting to SSID: ");
@@ -198,7 +198,7 @@ void WiFiManager::scheduleRetry(const String& reason) {
     state_ = State::FAILED;
     Serial.print("[WIFI] Connection failed. Reason: ");
     Serial.println(reason);
-    bleManager_.sendResponse("WIFI_FAILED|" + reason);
+    bleManager_.sendResponse("<WIFI_FAILED>");
     return;
   }
 
@@ -211,9 +211,7 @@ void WiFiManager::scheduleRetry(const String& reason) {
   Serial.print(RETRY_INTERVAL_MS / 1000);
   Serial.println(" seconds.");
 
-  bleManager_.sendResponse("WIFI_RETRYING|" +
-                           String(retryCount_ + 1) + "/" +
-                           String(MAX_RETRIES));
+  bleManager_.sendResponse("<WIFI_RETRYING>");
 }
 
 void WiFiManager::reportConnected() {
@@ -229,5 +227,5 @@ void WiFiManager::reportConnected() {
   Serial.print(WiFi.RSSI());
   Serial.println(" dBm");
 
-  bleManager_.sendResponse("WIFI_CONNECTED|" + ipAddress);
+  bleManager_.sendResponse("<WIFI_CONNECTED:" + ipAddress + ">");
 }

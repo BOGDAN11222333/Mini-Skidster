@@ -11,7 +11,7 @@ Firmware for the MiniSkidster RC skid-steer vehicle, based on the ESP32-C3 Super
 
 ## Current development stage
 
-**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.9)**
+**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.10)**
 
 The firmware uses the existing MIT App Inventor BLE interface and message protocol. The app remains responsible for displaying the Wi-Fi list, selecting an SSID, and collecting the password. The ESP32 sends scan results in the exact message sequence the app already parses.
 
@@ -20,12 +20,12 @@ The firmware uses the existing MIT App Inventor BLE interface and message protoc
 1. The app sends `<SCAN_WIFI>` to the BLE command RX characteristic.
 2. The ESP32 starts an asynchronous 2.4 GHz Wi-Fi scan.
 3. When the scan completes, the ESP32 sends:
-   - `@BWIFI_LIST_START@E` – the app clears its current Wi-Fi list.
-   - One `@BWIFI:<SSID>@E` message for each discovered network – the app adds each SSID to its existing list.
-   - `@BWIFI_LIST_END@E` – the app completes/displays the list.
+   - `@B<WIFI_LIST_START>@E` – the app clears its current Wi-Fi list.
+   - One `@B<WIFI:<SSID>,<RSSI>>@E` message for each discovered network – the app adds each SSID to its existing list, with signal strength.
+   - `@B<WIFI_LIST_END>@E` – the app completes/displays the list.
 4. You select the desired SSID in the app and enter its password.
 5. The app sends `<WIFI_CONNECT:ssid,password>` through the same BLE command RX characteristic.
-6. The ESP32 connects and sends `WIFI_CONNECTING`, followed by `WIFI_CONNECTED|<IP address>` on success, or a failure/retry message.
+6. The ESP32 connects and sends `<WIFI_CONNECTING>`, followed by `<WIFI_CONNECTED:<IP address>>` on success, or `<WIFI_FAILED>`.
 
 All ESP-to-phone messages retain the existing `@B...@E` framing and 20-character BLE notification chunking. Scan result names deliberately match the app's existing parser; no JSON format or app-side protocol change is required.
 
