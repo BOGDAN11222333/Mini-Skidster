@@ -14,4 +14,6 @@ public:
   String getProvisionedPassword() const;
 
   void sendTestNotification();
+  void sendResponse(const String& payload);
+  
 };

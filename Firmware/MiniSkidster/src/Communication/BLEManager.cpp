@@ -219,16 +219,17 @@ String BLEManager::getProvisionedPassword() const {
 }
 
 
-void BLEManager::sendTestNotification() {
+void BLEManager::sendResponse(const String& payload) {
   if (!g_bleConnected || g_txCharacteristic == nullptr) {
-    Serial.println("[BLE] Cannot send test notification: phone not connected.");
+    Serial.println("[BLE] Cannot send response: phone not connected.");
     return;
   }
 
-  const String message = "@BTEST|ESP32_RESPONSE@E";
+  // Add protocol framing.
+  const String message = "@B" + payload + "@E";
   const size_t chunkSize = 20;
 
-  Serial.println("[BLE] Sending test message in chunks:");
+  Serial.println("[BLE] Sending response:");
 
   for (size_t offset = 0; offset < message.length(); offset += chunkSize) {
     String chunk = message.substring(offset, offset + chunkSize);
@@ -242,6 +243,13 @@ void BLEManager::sendTestNotification() {
     delay(100);
   }
 
-  Serial.println("[BLE] Test message transmission complete.");
+  Serial.println("[BLE] Response transmission complete.");
 }
+
+void BLEManager::sendTestNotification() {
+  sendResponse("TEST|ESP32_RESPONSE");
+}
+
+
+
 
