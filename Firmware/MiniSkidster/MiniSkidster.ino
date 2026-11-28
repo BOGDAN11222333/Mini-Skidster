@@ -18,9 +18,15 @@ void setup() {
 }
 
 void loop() {
-  // Stage 1.3: MiniSkidster BLE GATT interface and command RX test only.
-  // Wi-Fi, protocol and vehicle-control tasks will be added in later stages.
-  delay(1000);
+  if (Serial.available()) {
+    char command = Serial.read();
+
+    if (command == 'T' || command == 't') {
+      bleManager.sendTestNotification();
+    }
+  }
+
+  delay(10);
 }
 
 void printStartupInformation() {
