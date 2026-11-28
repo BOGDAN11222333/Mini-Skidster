@@ -48,12 +48,14 @@ void sendBLEResponse(const String& payload) {
 
 class MiniSkidsterServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* server) override {
+    g_rxBuffer = "";
     g_bleConnected = true;
     Serial.println("[BLE] Phone connected.");
   }
 
   void onDisconnect(BLEServer* server) override {
     g_bleConnected = false;
+    g_rxBuffer = "";
     Serial.println("[BLE] Phone disconnected.");
     Serial.println("[BLE] Restarting advertising...");
     BLEDevice::startAdvertising();
@@ -99,6 +101,10 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
       return;
     }
 
+    // Log receipt without printing payload bytes (which may contain a Wi-Fi password).
+    Serial.print("[BLE] RX write received. Bytes: ");
+    Serial.println(chunk.length());
+
     g_rxBuffer += chunk;
 
     if (g_rxBuffer.length() > 512) {
@@ -112,8 +118,12 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
 
     while (start >= 0 && end > start) {
       const String command = g_rxBuffer.substring(start, end + 1);
-      Serial.print("[BLE] Command received: ");
-      Serial.println(command);
+      if (command.startsWith("<WIFI_CONNECT:")) {
+        Serial.println("[BLE] Command received: <WIFI_CONNECT:[credentials hidden]>");
+      } else {
+        Serial.print("[BLE] Command received: ");
+        Serial.println(command);
+      }
 
       String response;
 
@@ -211,7 +221,7 @@ bool BLEManager::begin() {
 
   BLECharacteristic* rxCharacteristic = service->createCharacteristic(
       MINISKIDSTER_BLE_RX_CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
+      BLECharacteristic::PROPERTY_WRITE);
   if (rxCharacteristic == nullptr) {
     Serial.println("[BLE] ERROR: Could not create RX characteristic.");
     return false;
