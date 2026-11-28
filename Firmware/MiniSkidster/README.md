@@ -11,7 +11,7 @@ Firmware for the MiniSkidster RC skid-steer vehicle, based on the ESP32-C3 Super
 
 ## Current development stage
 
-**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.10)**
+**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.11)**
 
 The firmware uses the existing MIT App Inventor BLE interface and message protocol. The app remains responsible for displaying the Wi-Fi list, selecting an SSID, and collecting the password. The ESP32 sends scan results in the exact message sequence the app already parses.
 
@@ -38,7 +38,7 @@ The combined credential command uses the first comma as the SSID/password separa
 - Device information READ: `7b2e0002-6d3a-4f8c-9b21-5a7d3c8e1000`
 - Wi-Fi SSID WRITE (legacy characteristic): `7b2e0003-6d3a-4f8c-9b21-5a7d3c8e1000`
 - Wi-Fi password WRITE (legacy characteristic): `7b2e0004-6d3a-4f8c-9b21-5a7d3c8e1000`
-- Command RX WRITE: `7b2e0005-6d3a-4f8c-9b21-5a7d3c8e1000`
+- Command RX WRITE: `7b2e0005-6d3a-4f8c-9b21-5a7d3c8e1000` (write-with-response, matching the proven Oliver RC Car BLE setup)
 - Response TX READ/NOTIFY: `7b2e0006-6d3a-4f8c-9b21-5a7d3c8e1000`
 
 The app's current combined `<WIFI_CONNECT:ssid,password>` command is handled by the RX characteristic. The separate SSID/password characteristics remain available for compatibility but are not used by this app flow.
