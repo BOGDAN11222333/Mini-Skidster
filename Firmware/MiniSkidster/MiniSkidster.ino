@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include "src/Config/Config.h"
 #include "src/Communication/BLEManager.h"
+#include "src/Communication/WiFiManager.h"
 
 BLEManager bleManager;
+WiFiManager wifiManager(bleManager);
 
 void printStartupInformation();
 
@@ -15,6 +17,8 @@ void setup() {
   if (!bleManager.begin()) {
     Serial.println("[SYSTEM] BLE startup failed.");
   }
+
+  wifiManager.begin();
 }
 
 void loop() {
@@ -25,6 +29,8 @@ void loop() {
       bleManager.sendTestNotification();
     }
   }
+
+  wifiManager.update();
 
   delay(10);
 }
@@ -43,8 +49,9 @@ void printStartupInformation() {
   Serial.print(F("CPU frequency: "));
   Serial.print(ESP.getCpuFreqMHz());
   Serial.println(F(" MHz"));
-  Serial.println(F("Stage: 1.5 - Protocol and command expansion"));
-  Serial.println(F("Wi-Fi connection: not implemented"));
+  Serial.println(F("Stage: 2.0 - Wi-Fi connection"));
+  Serial.println(F("Wi-Fi: BLE-provisioned station connection"));
+  Serial.println(F("HTTP server: not implemented"));
   Serial.println(F("Motor/servo outputs: not initialized"));
   Serial.println(F("Command parsing: validation only; no hardware movement"));
   Serial.println(F("System startup complete."));
