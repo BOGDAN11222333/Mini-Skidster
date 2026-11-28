@@ -217,6 +217,8 @@ String BLEManager::getProvisionedSSID() const {
 String BLEManager::getProvisionedPassword() const {
   return g_wifiPassword;
 }
+
+
 void BLEManager::sendTestNotification() {
   if (!g_bleConnected || g_txCharacteristic == nullptr) {
     Serial.println("[BLE] Cannot send test notification: phone not connected.");
@@ -224,11 +226,22 @@ void BLEManager::sendTestNotification() {
   }
 
   const String message = "@BTEST|ESP32_RESPONSE@E";
+  const size_t chunkSize = 20;
 
-  g_txCharacteristic->setValue(message.c_str());
-  g_txCharacteristic->notify();
+  Serial.println("[BLE] Sending test message in chunks:");
 
-  Serial.print("[BLE] Test notification sent: ");
-  Serial.println(message);
-}  
+  for (size_t offset = 0; offset < message.length(); offset += chunkSize) {
+    String chunk = message.substring(offset, offset + chunkSize);
+
+    g_txCharacteristic->setValue(chunk.c_str());
+    g_txCharacteristic->notify();
+
+    Serial.print("[BLE] TX chunk: ");
+    Serial.println(chunk);
+
+    delay(100);
+  }
+
+  Serial.println("[BLE] Test message transmission complete.");
+}
 
