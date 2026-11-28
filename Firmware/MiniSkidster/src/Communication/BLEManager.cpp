@@ -4,6 +4,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
+#include "CommandProcessor.h"
 #include "../Config/Config.h"
 
 namespace {
@@ -16,6 +17,35 @@ bool g_passwordReceived = false;
 
 BLECharacteristic* g_txCharacteristic = nullptr;
 String g_rxBuffer;
+
+CommandProcessor g_commandProcessor;
+
+// Sends a payload using the established BLE response framing and chunk size.
+void sendBLEResponse(const String& payload) {
+  if (!g_bleConnected || g_txCharacteristic == nullptr) {
+    Serial.println("[BLE] Cannot send response: phone not connected.");
+    return;
+  }
+
+  const String message = "@B" + payload + "@E";
+  const size_t chunkSize = 20;
+
+  Serial.println("[BLE] Sending response:");
+
+  for (size_t offset = 0; offset < message.length(); offset += chunkSize) {
+    String chunk = message.substring(offset, offset + chunkSize);
+
+    g_txCharacteristic->setValue(chunk.c_str());
+    g_txCharacteristic->notify();
+
+    Serial.print("[BLE] TX chunk: ");
+    Serial.println(chunk);
+
+    delay(100);
+  }
+
+  Serial.println("[BLE] Response transmission complete.");
+}
 
 class MiniSkidsterServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* server) override {
@@ -73,9 +103,8 @@ private:
   bool isSSID_;
 };
 
-// Stage 1.3 GATT smoke test: receive complete angle-bracket commands.
-// Chunk assembly is intentionally kept minimal here; the full protocol
-// parser will be implemented as a separate module.
+// Receives BLE write chunks, assembles complete angle-bracket commands,
+// passes each command to CommandProcessor, and returns its response.
 class BLECommandCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* characteristic) override {
     const String chunk = characteristic->getValue();
@@ -98,6 +127,12 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
       String command = g_rxBuffer.substring(start, end + 1);
       Serial.print("[BLE] Command received: ");
       Serial.println(command);
+
+      const String response = g_commandProcessor.processCommand(command);
+      Serial.print("[BLE] Command response: ");
+      Serial.println(response);
+      sendBLEResponse(response);
+
       g_rxBuffer.remove(0, end + 1);
       start = g_rxBuffer.indexOf('<');
       end = g_rxBuffer.indexOf('>', start + 1);
@@ -218,38 +253,10 @@ String BLEManager::getProvisionedPassword() const {
   return g_wifiPassword;
 }
 
-
 void BLEManager::sendResponse(const String& payload) {
-  if (!g_bleConnected || g_txCharacteristic == nullptr) {
-    Serial.println("[BLE] Cannot send response: phone not connected.");
-    return;
-  }
-
-  // Add protocol framing.
-  const String message = "@B" + payload + "@E";
-  const size_t chunkSize = 20;
-
-  Serial.println("[BLE] Sending response:");
-
-  for (size_t offset = 0; offset < message.length(); offset += chunkSize) {
-    String chunk = message.substring(offset, offset + chunkSize);
-
-    g_txCharacteristic->setValue(chunk.c_str());
-    g_txCharacteristic->notify();
-
-    Serial.print("[BLE] TX chunk: ");
-    Serial.println(chunk);
-
-    delay(100);
-  }
-
-  Serial.println("[BLE] Response transmission complete.");
+  sendBLEResponse(payload);
 }
 
 void BLEManager::sendTestNotification() {
   sendResponse("TEST|ESP32_RESPONSE");
 }
-
-
-
-
