@@ -153,7 +153,7 @@ void WiFiManager::reportScanResults(int16_t networkCount) {
     Serial.print(WiFi.RSSI(i));
     Serial.println(" dBm)");
 
-    bleManager_.sendResponse("WIFI:" + ssid);
+    bleManager_.sendResponse("WIFI|" + ssid);
   }
 
   bleManager_.sendResponse("WIFI_LIST_END");

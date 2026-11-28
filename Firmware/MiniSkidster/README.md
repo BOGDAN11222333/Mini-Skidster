@@ -11,7 +11,7 @@ Firmware for the MiniSkidster RC skid-steer vehicle, based on the ESP32-C3 Super
 
 ## Current development stage
 
-**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.8)**
+**Stage 2.0 – BLE Wi-Fi provisioning (development build 1.0.0-dev.9)**
 
 The firmware uses the existing MIT App Inventor BLE interface and message protocol. The app remains responsible for displaying the Wi-Fi list, selecting an SSID, and collecting the password. The ESP32 sends scan results in the exact message sequence the app already parses.
 
