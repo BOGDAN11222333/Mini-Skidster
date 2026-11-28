@@ -43,9 +43,10 @@ void printStartupInformation() {
   Serial.print(F("CPU frequency: "));
   Serial.print(ESP.getCpuFreqMHz());
   Serial.println(F(" MHz"));
-  Serial.println(F("Stage: 1.3 - BLE GATT interface alignment"));
+  Serial.println(F("Stage: 1.5 - Protocol and command expansion"));
   Serial.println(F("Wi-Fi connection: not implemented"));
   Serial.println(F("Motor/servo outputs: not initialized"));
+  Serial.println(F("Command parsing: validation only; no hardware movement"));
   Serial.println(F("System startup complete."));
   Serial.println(F("========================================"));
 }
