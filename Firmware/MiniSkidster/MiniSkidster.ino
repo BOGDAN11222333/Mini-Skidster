@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include "Config/Config.h"
-#include "Communication/BLEManager.h"
+#include "src/Config/Config.h"
+#include "src/Communication/BLEManager.h"
 
 BLEManager bleManager;
 
