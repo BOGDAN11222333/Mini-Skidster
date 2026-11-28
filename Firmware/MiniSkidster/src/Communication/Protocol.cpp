@@ -79,7 +79,9 @@ ProtocolResult Protocol::parseCommand(const String& framedCommand, ParsedCommand
 }
 
 bool Protocol::parseInteger(const String& value, int& result) const {
-  if (value.isEmpty()) {
+  // The longest valid value is "-100". This also prevents integer overflow
+  // before the command-specific range checks are applied.
+  if (value.isEmpty() || value.length() > 4) {
     return false;
   }
 
