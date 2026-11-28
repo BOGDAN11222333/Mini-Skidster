@@ -8,7 +8,7 @@
 // Development stage: 2.0 - BLE Wi-Fi provisioning
 // -----------------------------------------------------------------------------
 
-#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.10"
+#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.11"
 #define MINISKIDSTER_BOARD_NAME "ESP32-C3 Super Mini"
 #define MINISKIDSTER_SERIAL_BAUD 115200
 
