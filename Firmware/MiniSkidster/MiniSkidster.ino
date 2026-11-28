@@ -14,6 +14,8 @@ void setup() {
 
   printStartupInformation();
 
+  bleManager.setWiFiManager(&wifiManager);
+
   if (!bleManager.begin()) {
     Serial.println("[SYSTEM] BLE startup failed.");
   }
@@ -49,11 +51,11 @@ void printStartupInformation() {
   Serial.print(F("CPU frequency: "));
   Serial.print(ESP.getCpuFreqMHz());
   Serial.println(F(" MHz"));
-  Serial.println(F("Stage: 2.0 - Wi-Fi connection"));
-  Serial.println(F("Wi-Fi: BLE-provisioned station connection"));
+  Serial.println(F("Stage: 2.0 - BLE Wi-Fi provisioning"));
+  Serial.println(F("Wi-Fi flow: scan, select, provide credentials, connect"));
   Serial.println(F("HTTP server: not implemented"));
   Serial.println(F("Motor/servo outputs: not initialized"));
-  Serial.println(F("Command parsing: validation only; no hardware movement"));
+  Serial.println(F("Vehicle command parsing: validation only"));
   Serial.println(F("System startup complete."));
   Serial.println(F("========================================"));
 }

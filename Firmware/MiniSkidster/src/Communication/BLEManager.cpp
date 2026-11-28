@@ -5,6 +5,7 @@
 #include <BLEUtils.h>
 
 #include "CommandProcessor.h"
+#include "WiFiManager.h"
 #include "../Config/Config.h"
 
 namespace {
@@ -19,6 +20,7 @@ BLECharacteristic* g_txCharacteristic = nullptr;
 String g_rxBuffer;
 
 CommandProcessor g_commandProcessor;
+WiFiManager* g_wifiManager = nullptr;
 
 // Sends a payload using the established BLE response framing and chunk size.
 void sendBLEResponse(const String& payload) {
@@ -95,7 +97,7 @@ public:
     }
 
     if (g_ssidReceived && g_passwordReceived) {
-      Serial.println("[BLE] Wi-Fi credentials received and stored in RAM.");
+      Serial.println("[BLE] Wi-Fi credentials stored in RAM; waiting for WIFI_CONNECT.");
     }
   }
 
@@ -103,8 +105,7 @@ private:
   bool isSSID_;
 };
 
-// Receives BLE write chunks, assembles complete angle-bracket commands,
-// passes each command to CommandProcessor, and returns its response.
+// Receives BLE write chunks and dispatches complete commands.
 class BLECommandCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* characteristic) override {
     const String chunk = characteristic->getValue();
@@ -124,11 +125,25 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
     int end = g_rxBuffer.indexOf('>', start + 1);
 
     while (start >= 0 && end > start) {
-      String command = g_rxBuffer.substring(start, end + 1);
+      const String command = g_rxBuffer.substring(start, end + 1);
       Serial.print("[BLE] Command received: ");
       Serial.println(command);
 
-      const String response = g_commandProcessor.processCommand(command);
+      String response;
+
+      // Provisioning commands are handled separately from vehicle commands.
+      if (command == "<WIFI_SCAN>") {
+        response = g_wifiManager != nullptr
+                       ? g_wifiManager->requestScan()
+                       : "ERROR|WIFI_MANAGER_UNAVAILABLE";
+      } else if (command == "<WIFI_CONNECT>") {
+        response = g_wifiManager != nullptr
+                       ? g_wifiManager->requestConnection()
+                       : "ERROR|WIFI_MANAGER_UNAVAILABLE";
+      } else {
+        response = g_commandProcessor.processCommand(command);
+      }
+
       Serial.print("[BLE] Command response: ");
       Serial.println(response);
       sendBLEResponse(response);
@@ -146,6 +161,10 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
 };
 
 }  // namespace
+
+void BLEManager::setWiFiManager(WiFiManager* manager) {
+  g_wifiManager = manager;
+}
 
 bool BLEManager::begin() {
   Serial.println();
@@ -231,6 +250,7 @@ bool BLEManager::begin() {
   Serial.println("[BLE]   0004 - Wi-Fi password (WRITE)");
   Serial.println("[BLE]   0005 - Command RX (WRITE)");
   Serial.println("[BLE]   0006 - Response TX (READ/NOTIFY)");
+  Serial.println("[BLE] Provisioning commands: <WIFI_SCAN>, <WIFI_CONNECT>");
   Serial.println("[BLE] Advertising: active");
   Serial.println("[BLE] Waiting for phone connection...");
 
