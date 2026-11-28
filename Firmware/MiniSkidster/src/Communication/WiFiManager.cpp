@@ -2,42 +2,6 @@
 
 #include <WiFi.h>
 
-namespace {
-
-// Escape a string for safe inclusion as a JSON string value.
-String jsonEscape(const String& value) {
-  String escaped;
-  escaped.reserve(value.length() + 8);
-
-  for (size_t i = 0; i < value.length(); ++i) {
-    const char c = value.charAt(i);
-
-    switch (c) {
-      case '"': escaped += "\\\""; break;
-      case '\\': escaped += "\\\\"; break;
-      case '\b': escaped += "\\b"; break;
-      case '\f': escaped += "\\f"; break;
-      case '\n': escaped += "\\n"; break;
-      case '\r': escaped += "\\r"; break;
-      case '\t': escaped += "\\t"; break;
-      default:
-        if (static_cast<uint8_t>(c) < 0x20) {
-          const char hex[] = "0123456789ABCDEF";
-          escaped += "\\u00";
-          escaped += hex[(static_cast<uint8_t>(c) >> 4) & 0x0F];
-          escaped += hex[static_cast<uint8_t>(c) & 0x0F];
-        } else {
-          escaped += c;
-        }
-        break;
-    }
-  }
-
-  return escaped;
-}
-
-}  // namespace
-
 WiFiManager::WiFiManager(BLEManager& bleManager)
     : bleManager_(bleManager) {}
 
@@ -54,7 +18,7 @@ void WiFiManager::begin() {
   retryCount_ = 0;
   connectionRequested_ = false;
 
-  Serial.println("[WIFI] Ready. Send <WIFI_SCAN> to discover nearby networks.");
+  Serial.println("[WIFI] Ready. App can request a scan.");
 }
 
 String WiFiManager::requestScan() {
@@ -71,7 +35,7 @@ String WiFiManager::requestScan() {
 
   if (result == WIFI_SCAN_FAILED) {
     Serial.println("[WIFI] Could not start asynchronous scan.");
-    return "WIFI_SCAN_FAILED|START";
+    return "WIFI_SCAN_FAILED";
   }
 
   state_ = State::SCANNING;
@@ -81,20 +45,24 @@ String WiFiManager::requestScan() {
   return "WIFI_SCAN_STARTED";
 }
 
-String WiFiManager::requestConnection() {
+String WiFiManager::requestConnection(const String& ssid,
+                                      const String& password) {
   if (state_ != State::WAITING_FOR_REQUEST && state_ != State::FAILED) {
     return "WIFI_CONNECT_BUSY";
   }
 
-  if (!bleManager_.hasWiFiCredentials()) {
-    return "ERROR|WIFI_CREDENTIALS_MISSING";
+  if (ssid.isEmpty() || ssid.length() > 32 || password.length() > 63) {
+    return "ERROR|INVALID_WIFI_CREDENTIALS";
   }
 
+  ssid_ = ssid;
+  password_ = password;
   connectionRequested_ = true;
   retryCount_ = 0;
   state_ = State::WAITING_FOR_REQUEST;
 
-  Serial.println("[WIFI] Connection requested; credentials accepted.");
+  Serial.print("[WIFI] Credentials accepted for SSID: ");
+  Serial.println(ssid_);
   return "WIFI_CONNECT_REQUESTED";
 }
 
@@ -134,7 +102,7 @@ void WiFiManager::update() {
       break;
 
     case State::FAILED:
-      // A new explicit WIFI_CONNECT request can start another attempt.
+      // A new explicit WIFI_CONNECT command can start another attempt.
       break;
   }
 }
@@ -148,7 +116,8 @@ void WiFiManager::updateScan() {
 
   if (result == WIFI_SCAN_FAILED) {
     Serial.println("[WIFI] Network scan failed.");
-    bleManager_.sendResponse("WIFI_SCAN_FAILED");
+    bleManager_.sendResponse("WIFI_LIST_START");
+    bleManager_.sendResponse("WIFI_LIST_END");
     WiFi.scanDelete();
     state_ = State::WAITING_FOR_REQUEST;
     return;
@@ -168,30 +137,26 @@ void WiFiManager::reportScanResults(int16_t networkCount) {
   Serial.print("[WIFI] Scan complete. Networks found: ");
   Serial.println(networkCount);
 
-  // Each network is a separate framed BLE message. SSIDs are JSON-escaped,
-  // so punctuation and delimiter characters in a network name are safe.
-  bleManager_.sendResponse("WIFI_SCAN_BEGIN|" + String(reportedCount));
+  // These message names and payloads match the existing MIT App Inventor
+  // receive parser: clear list, append each WIFI value, then finish the list.
+  bleManager_.sendResponse("WIFI_LIST_START");
 
   for (uint8_t i = 0; i < reportedCount; ++i) {
     const String ssid = WiFi.SSID(i);
-    const int32_t rssi = WiFi.RSSI(i);
-    const bool secure = WiFi.encryptionType(i) != WIFI_AUTH_OPEN;
+    if (ssid.isEmpty()) {
+      continue;
+    }
 
-    const String payload =
-        String("WIFI_NETWORK|{\"ssid\":\"") + jsonEscape(ssid) +
-        "\",\"rssi\":" + String(rssi) +
-        ",\"secure\":" + (secure ? "true" : "false") + "}";
-
-    Serial.print("[WIFI] Network: ");
+    Serial.print("[WIFI] Network found: ");
     Serial.print(ssid);
     Serial.print(" (");
-    Serial.print(rssi);
+    Serial.print(WiFi.RSSI(i));
     Serial.println(" dBm)");
 
-    bleManager_.sendResponse(payload);
+    bleManager_.sendResponse("WIFI:" + ssid);
   }
 
-  bleManager_.sendResponse("WIFI_SCAN_END");
+  bleManager_.sendResponse("WIFI_LIST_END");
 }
 
 bool WiFiManager::isConnected() const {
@@ -199,8 +164,8 @@ bool WiFiManager::isConnected() const {
 }
 
 void WiFiManager::startConnection(bool isRetry) {
-  if (!bleManager_.hasWiFiCredentials()) {
-    Serial.println("[WIFI] Cannot connect: credentials are not available.");
+  if (ssid_.isEmpty()) {
+    Serial.println("[WIFI] Cannot connect: SSID is empty.");
     state_ = State::WAITING_FOR_REQUEST;
     return;
   }
@@ -216,14 +181,11 @@ void WiFiManager::startConnection(bool isRetry) {
     bleManager_.sendResponse("WIFI_CONNECTING");
   }
 
-  const String ssid = bleManager_.getProvisionedSSID();
-  const String password = bleManager_.getProvisionedPassword();
-
   Serial.print("[WIFI] Connecting to SSID: ");
-  Serial.println(ssid);
+  Serial.println(ssid_);
 
   WiFi.disconnect();
-  WiFi.begin(ssid.c_str(), password.c_str());
+  WiFi.begin(ssid_.c_str(), password_.c_str());
 
   state_ = State::CONNECTING;
   stateStartedAt_ = millis();

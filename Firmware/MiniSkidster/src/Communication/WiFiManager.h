@@ -4,7 +4,7 @@
 
 #include "BLEManager.h"
 
-// Manages Wi-Fi discovery and station connection using BLE provisioning.
+// Manages Wi-Fi discovery and station connection using the existing app protocol.
 class WiFiManager {
 public:
   explicit WiFiManager(BLEManager& bleManager);
@@ -12,10 +12,9 @@ public:
   void begin();
   void update();
 
-  // Called by the BLE command router. These methods only request work;
-  // scanning and connection monitoring are performed from update().
+  // Requests are queued here and processed from update(), outside BLE callbacks.
   String requestScan();
-  String requestConnection();
+  String requestConnection(const String& ssid, const String& password);
 
   bool isConnected() const;
 
@@ -40,6 +39,8 @@ private:
   unsigned long stateStartedAt_ = 0;
   uint8_t retryCount_ = 0;
   bool connectionRequested_ = false;
+  String ssid_;
+  String password_;
 
   static constexpr unsigned long CONNECT_TIMEOUT_MS = 10000UL;
   static constexpr unsigned long RETRY_INTERVAL_MS = 5000UL;

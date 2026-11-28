@@ -22,7 +22,6 @@ String g_rxBuffer;
 CommandProcessor g_commandProcessor;
 WiFiManager* g_wifiManager = nullptr;
 
-// Sends a payload using the established BLE response framing and chunk size.
 void sendBLEResponse(const String& payload) {
   if (!g_bleConnected || g_txCharacteristic == nullptr) {
     Serial.println("[BLE] Cannot send response: phone not connected.");
@@ -35,14 +34,12 @@ void sendBLEResponse(const String& payload) {
   Serial.println("[BLE] Sending response:");
 
   for (size_t offset = 0; offset < message.length(); offset += chunkSize) {
-    String chunk = message.substring(offset, offset + chunkSize);
-
+    const String chunk = message.substring(offset, offset + chunkSize);
     g_txCharacteristic->setValue(chunk.c_str());
     g_txCharacteristic->notify();
 
     Serial.print("[BLE] TX chunk: ");
     Serial.println(chunk);
-
     delay(100);
   }
 
@@ -76,28 +73,18 @@ public:
         Serial.println("[BLE] Rejected SSID: length must be 1-32 bytes.");
         return;
       }
-
       g_wifiSSID = value;
       g_ssidReceived = true;
-      Serial.print("[BLE] Wi-Fi SSID received (");
-      Serial.print(value.length());
-      Serial.println(" bytes).");
+      Serial.println("[BLE] Wi-Fi SSID characteristic updated.");
     } else {
       if (value.length() > 63) {
         g_passwordReceived = false;
         Serial.println("[BLE] Rejected Wi-Fi password: maximum 63 bytes.");
         return;
       }
-
       g_wifiPassword = value;
       g_passwordReceived = true;
-      Serial.print("[BLE] Wi-Fi password received (");
-      Serial.print(value.length());
-      Serial.println(" bytes).");
-    }
-
-    if (g_ssidReceived && g_passwordReceived) {
-      Serial.println("[BLE] Wi-Fi credentials stored in RAM; waiting for WIFI_CONNECT.");
+      Serial.println("[BLE] Wi-Fi password characteristic updated.");
     }
   }
 
@@ -105,7 +92,6 @@ private:
   bool isSSID_;
 };
 
-// Receives BLE write chunks and dispatches complete commands.
 class BLECommandCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* characteristic) override {
     const String chunk = characteristic->getValue();
@@ -131,15 +117,27 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
 
       String response;
 
-      // Provisioning commands are handled separately from vehicle commands.
-      if (command == "<WIFI_SCAN>") {
+      // Preserve the exact provisioning commands already used by the app.
+      if (command == "<SCAN_WIFI>") {
         response = g_wifiManager != nullptr
                        ? g_wifiManager->requestScan()
                        : "ERROR|WIFI_MANAGER_UNAVAILABLE";
-      } else if (command == "<WIFI_CONNECT>") {
-        response = g_wifiManager != nullptr
-                       ? g_wifiManager->requestConnection()
-                       : "ERROR|WIFI_MANAGER_UNAVAILABLE";
+      } else if (command.startsWith("<WIFI_CONNECT:") &&
+                 command.endsWith(">")) {
+        const String credentials =
+            command.substring(String("<WIFI_CONNECT:").length(),
+                              command.length() - 1);
+        const int separator = credentials.indexOf(',');
+
+        if (separator <= 0) {
+          response = "ERROR|INVALID_WIFI_CREDENTIALS";
+        } else if (g_wifiManager == nullptr) {
+          response = "ERROR|WIFI_MANAGER_UNAVAILABLE";
+        } else {
+          const String ssid = credentials.substring(0, separator);
+          const String password = credentials.substring(separator + 1);
+          response = g_wifiManager->requestConnection(ssid, password);
+        }
       } else {
         response = g_commandProcessor.processCommand(command);
       }
@@ -153,7 +151,6 @@ class BLECommandCallbacks : public BLECharacteristicCallbacks {
       end = g_rxBuffer.indexOf('>', start + 1);
     }
 
-    // Discard noise before a possible start marker.
     if (start > 0) {
       g_rxBuffer.remove(0, start);
     }
@@ -178,7 +175,6 @@ bool BLEManager::begin() {
     Serial.println("[BLE] ERROR: Could not create BLE server.");
     return false;
   }
-
   server->setCallbacks(new MiniSkidsterServerCallbacks());
 
   BLEService* service = server->createService(MINISKIDSTER_BLE_SERVICE_UUID);
@@ -210,7 +206,6 @@ bool BLEManager::begin() {
     Serial.println("[BLE] ERROR: Could not create Wi-Fi credential characteristics.");
     return false;
   }
-
   ssidCharacteristic->setCallbacks(new WiFiCredentialCallbacks(true));
   passwordCharacteristic->setCallbacks(new WiFiCredentialCallbacks(false));
 
@@ -246,11 +241,11 @@ bool BLEManager::begin() {
   Serial.println(MINISKIDSTER_BLE_SERVICE_UUID);
   Serial.println("[BLE] GATT characteristics:");
   Serial.println("[BLE]   0002 - Device information (READ)");
-  Serial.println("[BLE]   0003 - Wi-Fi SSID (WRITE)");
-  Serial.println("[BLE]   0004 - Wi-Fi password (WRITE)");
+  Serial.println("[BLE]   0003 - Legacy Wi-Fi SSID (WRITE)");
+  Serial.println("[BLE]   0004 - Legacy Wi-Fi password (WRITE)");
   Serial.println("[BLE]   0005 - Command RX (WRITE)");
   Serial.println("[BLE]   0006 - Response TX (READ/NOTIFY)");
-  Serial.println("[BLE] Provisioning commands: <WIFI_SCAN>, <WIFI_CONNECT>");
+  Serial.println("[BLE] App provisioning commands: <SCAN_WIFI>, <WIFI_CONNECT:ssid,password>");
   Serial.println("[BLE] Advertising: active");
   Serial.println("[BLE] Waiting for phone connection...");
 
