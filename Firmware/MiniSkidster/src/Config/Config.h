@@ -5,10 +5,10 @@
 // -----------------------------------------------------------------------------
 // MiniSkidster firmware configuration
 // Board: ESP32-C3 Super Mini
-// Development stage: 1.3 - BLE GATT interface alignment
+// Development stage: 1.5 - Protocol and command expansion
 // -----------------------------------------------------------------------------
 
-#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.4"
+#define MINISKIDSTER_FIRMWARE_VERSION "1.0.0-dev.5"
 #define MINISKIDSTER_BOARD_NAME "ESP32-C3 Super Mini"
 #define MINISKIDSTER_SERIAL_BAUD 115200
 
